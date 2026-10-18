@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Buy Zones Widget</title>
+<meta name="description" content="Put Mal Crypto's live buy zones on your home screen.">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#04060E">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/favicon-64.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Buy Zones">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04060E;--card:rgba(18,24,52,.55);--edge:rgba(170,190,255,.16);--edge-hi:rgba(190,205,255,.34);--fg:#F6F8FF;--soft:#C3CBEA;--muted:#8F9AC4;--mint:#2EF2A6;--gold:#FFC53D;--violet:#A78BFA;
+  --brand:linear-gradient(120deg,#3B82F6,#8B5CF6 55%,#E26BFF);--display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 700px at 15% -10%,rgba(59,130,246,.18),transparent 60%),radial-gradient(900px 600px at 100% 0%,rgba(226,107,255,.14),transparent 55%),var(--bg);color:var(--fg);font-family:var(--body);min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:760px;margin:0 auto;padding:28px 16px 60px}
+a{color:inherit}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--soft);text-decoration:none;font-weight:700;font-size:14px;margin-bottom:18px}
+.eyebrow{font:700 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--violet);margin:0 0 8px}
+h1{font-family:var(--display);font-size:clamp(30px,7vw,44px);line-height:1.02;margin:0 0 10px;letter-spacing:-.02em}
+h1 span{background:var(--brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--soft);font-size:16px;line-height:1.5;margin:0 0 22px;max-width:56ch}
+.glass{background:var(--card);border:1px solid var(--edge);border-radius:22px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.tabs{display:flex;gap:8px;margin:0 0 14px}
+.tabs button{flex:1;padding:12px;border-radius:14px;border:1px solid var(--edge);background:rgba(255,255,255,.04);color:var(--soft);font:800 14px var(--body);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:transparent}
+.card{padding:20px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:rgba(139,92,246,.18);border:1px solid rgba(167,139,250,.4);font:800 15px var(--display);color:#fff}
+.steps b{color:var(--fg)}.steps p{margin:6px 0 0;color:var(--soft);font-size:14px;line-height:1.5}
+.steps .t{font-weight:700;font-size:15px;line-height:1.4;padding-top:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;border-radius:14px;border:1px solid var(--edge);background:rgba(255,255,255,.06);color:var(--fg);font:800 14px var(--body);cursor:pointer;text-decoration:none;margin-top:10px}
+.btn.primary{background:var(--brand);border-color:transparent;box-shadow:0 10px 28px -12px rgba(139,92,246,.9)}
+.btn:active{transform:scale(.98)}
+.ok{color:var(--mint)}
+.preview{margin:22px 0 0;padding:16px;border-radius:24px;background:linear-gradient(145deg,#070A18,#140F33);border:1px solid var(--edge-hi);max-width:360px}
+.preview .h{font:800 11px var(--body);letter-spacing:.06em;color:var(--violet);margin-bottom:10px}
+.pr{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.pr .n{font-weight:800;font-size:14px}.pr .p{font:500 11px var(--mono);color:var(--muted)}
+.pr .e{font:600 12px var(--mono);text-align:right}.dots{display:flex;gap:3px;justify-content:flex-end;margin-top:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:#2A3156}.dots i.h{background:var(--mint)}.dots i.n{background:var(--gold)}
+.foot{font:500 10px var(--body);color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px}.foot::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mint)}
+.note{color:var(--muted);font-size:13px;line-height:1.5;margin:16px 0 0}
+[hidden]{display:none!important}
+</style></head><body><main>
+<a class="back" href="./">← Back to the watchlist</a>
+<p class="eyebrow">Mal Crypto · Home screen widget</p>
+<h1>Your buy zones, <span>on your home screen</span></h1>
+<p class="lead">See which coins are closest to their next entry without opening anything. It uses the same live prices and buy zones as the watchlist.</p>
+
+<div class="tabs" role="group" aria-label="Phone type"><button type="button" data-os="ios" aria-pressed="true">iPhone</button><button type="button" data-os="android" aria-pressed="false">Android</button></div>
+
+<section class="glass card" data-pane="ios">
+  <ol class="steps">
+    <li><div><div class="t">Get the free <b>Scriptable</b> app</div><p>It's the app that runs the widget. No account needed.</p><a class="btn" href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Open in the App Store</a></div></li>
+    <li><div><div class="t">Copy the widget</div><p>Tap the button below to copy it.</p><button class="btn primary" type="button" id="copy">Copy widget code</button> <span id="copied" class="ok" hidden>Copied ✓</span></div></li>
+    <li><div><div class="t">Paste it into Scriptable</div><p>Open Scriptable, tap <b>+</b> at the top right, paste, then tap the title at the top and name it <b>Mal Buy Zones</b>. Tap <b>Done</b>.</p></div></li>
+    <li><div><div class="t">Add it to your home screen</div><p>Press and hold an empty spot on your home screen, tap <b>Edit</b> then <b>Add Widget</b>, choose <b>Scriptable</b> and pick a size. Then press and hold the new widget, tap <b>Edit Widget</b>, and set <b>Script</b> to <b>Mal Buy Zones</b>.</p></div></li>
+  </ol>
+  <p class="note">Small shows the coin closest to an entry, medium shows the top 3 and large shows the top 7. To pin your own coins, set <b>Parameter</b> in Edit Widget to tickers like <b>TRUMP,FIL,SUSHI</b>. Tap the widget to open the full watchlist. iPhone refreshes widgets on its own schedule, usually every few minutes.</p>
+</section>
+
+<section class="glass card" data-pane="android" hidden>
+  <ol class="steps">
+    <li><div><div class="t">Install the Buy Zones app</div><p>Go back to the watchlist in <b>Chrome</b>, tap <b>Get the app</b> and follow the steps. It adds a Buy Zones icon to your home screen that opens straight into the live watchlist.</p><a class="btn primary" href="./">Open the watchlist</a></div></li>
+    <li><div><div class="t">Live widgets on Android</div><p>Android only allows live home screen widgets from apps installed through the Play Store, so for now the app icon is the quickest way in. The app shows everything the widget would, and more.</p></div></li>
+  </ol>
+</section>
+
+<div class="preview" aria-label="Widget preview">
+  <div class="h">MAL CRYPTO · BUY ZONES</div>
+  <div class="pr"><div><div class="n">SPX</div><div class="p">$0.3685</div></div><div><div class="e" style="color:var(--gold)">Entry 2  −0.3%</div><div class="dots"><i class="h"></i><i class="n"></i><i></i><i></i><i></i></div></div></div>
+  <div class="pr"><div><div class="n">PENDLE</div><div class="p">$2.0660</div></div><div><div class="e" style="color:var(--gold)">Entry 1  −0.5%</div><div class="dots"><i class="n"></i><i></i><i></i><i></i><i></i></div></div></div>
+  <div class="pr"><div><div class="n">DOGE</div><div class="p">$0.07936</div></div><div><div class="e" style="color:var(--gold)">Entry 3  −2.1%</div><div class="dots"><i class="h"></i><i class="h"></i><i class="n"></i><i></i><i></i></div></div></div>
+  <div class="foot">Live · example</div>
+</div>
+</main>
+<script>
+(() => {
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const setOS = (os) => { document.querySelectorAll("[data-os]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.os === os))); document.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== os; }); };
+  document.querySelectorAll("[data-os]").forEach((b) => b.addEventListener("click", () => setOS(b.dataset.os)));
+  if (isAndroid) setOS("android");
+  let code = null;
+  fetch("widget/MalBuyZones.js", {cache: "no-store"}).then((r) => r.text()).then((t) => { code = t; }).catch(() => {});
+  document.getElementById("copy").addEventListener("click", async () => {
+    try {
+      if (!code) code = await (await fetch("widget/MalBuyZones.js", {cache: "no-store"})).text();
+      await navigator.clipboard.writeText(code);
+    } catch (e) {
+      const ta = document.createElement("textarea"); ta.value = code || ""; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e2) {} ta.remove();
+    }
+    document.getElementById("copied").hidden = false;
+  });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+</script>
+</body></html>

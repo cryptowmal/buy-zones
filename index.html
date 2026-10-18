@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Mal Crypto spot buy zones: live prices, five DCA entries per coin and alerts."><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Mal Crypto spot buy zones: live prices, five DCA entries per coin and alerts."><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#04060E"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" href="icons/favicon-64.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Buy Zones">
 <title>Mal Crypto Buy Zones</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -195,6 +195,28 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   @keyframes sheen{50%{background-position:100% 0}}
 }
 @media (max-width:560px){.px{font-size:26px}.tk{font-size:21px}.stat .v{font-size:28px}}
+.alerts .tag{white-space:nowrap;flex:none}
+.alerts{min-width:0;max-width:100%}
+@media (max-width:640px){.alerts .list{flex-basis:100%;width:100%;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}.alerts .list::-webkit-scrollbar{display:none}.alerts .txt{flex:1}}
+
+/* Get-the-app sheet */
+dialog.appsheet{border:1px solid var(--edge-hi);border-radius:24px;padding:0;max-width:440px;width:calc(100% - 32px);background:linear-gradient(160deg,rgba(28,34,74,.96),rgba(10,13,32,.97));color:var(--fg);box-shadow:0 40px 90px -30px rgba(0,0,0,.9)}
+dialog.appsheet::backdrop{background:rgba(2,4,12,.66);backdrop-filter:blur(6px)}
+.appsheet .in{padding:22px 22px 20px}
+.appsheet .top{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-right:34px}
+.appsheet .top img{width:54px;height:54px;border-radius:14px}
+.appsheet h2{font-family:var(--display);font-size:21px;margin:0}
+.appsheet .top p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.appsheet .tabs{display:flex;gap:6px;margin:4px 0 14px}
+.appsheet .tabs button{flex:1;padding:9px;border-radius:12px;border:1px solid var(--edge);background:rgba(255,255,255,.04);color:var(--soft);font:700 13px var(--body);cursor:pointer}
+.appsheet .tabs button[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:transparent}
+.appsheet ol{margin:0;padding-left:20px;display:grid;gap:9px;font-size:14px;color:var(--soft);line-height:1.45}
+.appsheet ol b{color:var(--fg)}
+.appsheet .row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.appsheet .row .btn{flex:1;justify-content:center}
+.appsheet .note{margin:12px 0 0;font-size:12px;color:var(--muted)}
+.appsheet .x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);background:rgba(255,255,255,.05);color:var(--soft);cursor:pointer;font-size:18px;line-height:1}
+@media (display-mode: standalone){#getApp{display:none}}
 </style>
 </head><body>
 
@@ -217,6 +239,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     </div>
     <div class="actions">
       <span class="live glass off" id="live" role="status"><span class="dot"></span><span id="liveText">Connecting…</span></span>
+      <button class="btn primary" id="getApp" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M12 18h.01"/></svg>Get the app</button>
       <button class="btn" id="refresh" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Refresh</button>
       <a class="btn primary" id="tvBtn" href="https://www.tradingview.com/u/cryptowmal/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Mal Crypto on TradingView</a>
     </div>
@@ -568,4 +591,47 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
 })();
 </script>
 
+
+<dialog class="appsheet" id="appSheet" aria-labelledby="appTitle">
+  <div class="in">
+    <button class="x" type="button" id="appClose" aria-label="Close">×</button>
+    <div class="top"><img src="icons/icon-192.png" alt=""><div><h2 id="appTitle">Get the Buy Zones app</h2><p>Free, no account, live prices every 30 seconds.</p></div></div>
+    <div class="tabs" role="group" aria-label="Phone type"><button type="button" data-os="ios" aria-pressed="true">iPhone</button><button type="button" data-os="android" aria-pressed="false">Android</button></div>
+    <div data-pane="ios">
+      <ol>
+        <li>Open this page in <b>Safari</b>.</li>
+        <li>Tap the <b>Share</b> button (the square with the arrow).</li>
+        <li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+      </ol>
+    </div>
+    <div data-pane="android" hidden>
+      <ol id="andSteps">
+        <li>Open this page in <b>Chrome</b>.</li>
+        <li>Tap the <b>⋮ menu</b> at the top right.</li>
+        <li>Tap <b>Add to Home screen</b> or <b>Install app</b>, then <b>Install</b>.</li>
+      </ol>
+      <div class="row" id="andInstallRow" hidden><button class="btn primary" type="button" id="andInstall">Install now</button></div>
+    </div>
+    <div class="row"><a class="btn" href="widget.html">Add a home screen widget</a></div>
+    <p class="note">It opens full screen like a normal app and updates itself whenever the watchlist changes.</p>
+  </div>
+</dialog>
+<script>
+(() => {
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  const sheet = document.getElementById("appSheet"), btn = document.getElementById("getApp");
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (standalone && btn) btn.hidden = true;
+  const ua = navigator.userAgent, isAndroid = /Android/i.test(ua);
+  const setOS = (os) => { sheet.querySelectorAll("[data-os]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.os === os))); sheet.querySelectorAll("[data-pane]").forEach((p) => { p.hidden = p.dataset.pane !== os; }); };
+  sheet.querySelectorAll("[data-os]").forEach((b) => b.addEventListener("click", () => setOS(b.dataset.os)));
+  let deferred = null;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; document.getElementById("andInstallRow").hidden = false; });
+  document.getElementById("andInstall").addEventListener("click", async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; sheet.close(); });
+  window.addEventListener("appinstalled", () => { if (btn) btn.hidden = true; });
+  btn && btn.addEventListener("click", () => { setOS(isAndroid ? "android" : "ios"); sheet.showModal(); });
+  document.getElementById("appClose").addEventListener("click", () => sheet.close());
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
+})();
+</script>
 </body></html>

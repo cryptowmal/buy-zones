@@ -1,0 +1,21 @@
+{
+  "name": "Mal Crypto Buy Zones",
+  "short_name": "Buy Zones",
+  "description": "Live prices against Mal Crypto's weekly buy zones, with five DCA entries per coin and alerts.",
+  "id": "./",
+  "start_url": "./?source=app",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#04060E",
+  "theme_color": "#04060E",
+  "categories": ["finance"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Home screen widget", "url": "./widget.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}
