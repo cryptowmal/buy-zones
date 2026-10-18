@@ -142,6 +142,7 @@ h1 span{background:var(--brand);-webkit-background-clip:text;background-clip:tex
 .rung.bottom .lbl b,.rung.bottom .val .p{font-size:12px;color:var(--muted);font-weight:600}
 .foot{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--soft);flex-wrap:wrap;align-items:center;padding-top:2px;font-weight:600}
 .foot b{font-family:var(--mono);color:#7DF9D0}
+.foot .avgs{display:grid;gap:3px}.foot em{font-style:normal;font-family:var(--mono);font-weight:700}.foot em.pos{color:var(--mint)}.foot em.neg{color:var(--coral)}
 .open{display:inline-flex;align-items:center;gap:5px;color:var(--sky);font-weight:800}
 .empty{grid-column:1/-1;padding:44px;text-align:center;color:var(--soft)}
 
@@ -268,7 +269,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       <th data-k="e1">Entry 1</th><th data-k="p1">Drop needed</th><th data-k="d1">$ away</th>
       <th data-k="e2">Entry 2</th><th data-k="p2">Drop needed</th><th data-k="d2">$ away</th>
       <th data-k="e3">Entry 3</th><th data-k="p3">Drop needed</th><th data-k="d3">$ away</th>
-      <th data-k="avg">Avg entry</th>
+      <th data-k="avg">Avg if all 3 fill</th><th data-k="avgs">Avg so far</th><th data-k="pnl">P&amp;L now</th>
     </tr></thead><tbody id="tbody"></tbody></table>
   </section>
   <p class="note" id="foot">Live prices from Crypto.com, updated every 30 seconds. Buy zones drawn by Mal Crypto on the weekly chart. Educational content, not financial advice.</p>
@@ -317,9 +318,11 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     o.reached = o.hits.filter(Boolean).length;
     o.pct = o.entries.map((L) => price <= L ? 0 : L / price - 1);
     o.usd = o.entries.map((L) => price <= L ? 0 : price - L);
-    const mids = [(o.entries[0] + o.entries[1]) / 2, (o.entries[1] + o.entries[2]) / 2, (o.entries[2] + bot) / 2];
-    const tot = split[0] + split[1] + split[2] || 1;
-    o.avg = 1 / (split[0] / tot / mids[0] + split[1] / tot / mids[1] + split[2] / tot / mids[2]);
+    // Average entry = money spent / coins bought, when each entry gets its share of the money at that entry's exact price.
+    const avgOf = (n) => { let money = 0, got = 0; for (let k = 0; k < n; k++) { if (split[k] > 0 && o.entries[k] > 0) { money += split[k]; got += split[k] / o.entries[k]; } } return got ? money / got : null; };
+    o.avg = avgOf(3);
+    o.avgSoFar = o.reached ? avgOf(o.reached) : null;
+    o.pnl = o.avgSoFar ? price / o.avgSoFar - 1 : null;
     o.next = o.hits.indexOf(false);
     o.nextPct = o.next === -1 ? null : o.pct[o.next];
     o.status = c.sl != null && price >= c.sl ? "In sell zone" : price > top ? "Above buy zone" : price >= bot ? "In buy zone" : "Below buy zone";
@@ -432,8 +435,10 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       if (o.alert) a.append(flag(false, `${drop(o.nextPct)} from Entry ${o.next + 1} (${fd(o.usd[o.next], o.price)} away)`));
       else if (o.next === -1) a.append(flag(true, "All three entries reached"));
       a.append(ladder(o));
-      const f = el("div", "foot"); const avg = el("span"); avg.append(document.createTextNode("Average entry if all 3 fill "), el("b", "", fp(o.avg)));
-      f.append(avg, el("span", "open", "Open chart ↗")); a.append(f);
+      const f = el("div", "foot"); const avgs = el("div", "avgs");
+      const a1 = el("span"); a1.append(document.createTextNode("Average if all 3 fill "), el("b", "", fp(o.avg))); avgs.append(a1);
+      if (o.avgSoFar) { const a2 = el("span"); a2.append(document.createTextNode(`Average so far (${o.reached} of 3) `), el("b", "", fp(o.avgSoFar)), el("em", o.pnl >= 0 ? "pos" : "neg", ` ${fpc(o.pnl)} now`)); avgs.append(a2); }
+      f.append(avgs, el("span", "open", "Open chart ↗")); a.append(f);
     } else a.append(el("div", "flag", o.status === "Awaiting levels" ? "Add this coin's buy zone in the sheet" : "Waiting for a price"));
     return a;
   }
@@ -452,7 +457,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   }
 
   function drawTable(rs) {
-    const val = (o, k) => ({t: o.t, price: o.price, chg: o.chg, status: o.status, e1: o.entries?.[0], p1: o.pct?.[0], d1: o.usd?.[0], e2: o.entries?.[1], p2: o.pct?.[1], d2: o.usd?.[1], e3: o.entries?.[2], p3: o.pct?.[2], d3: o.usd?.[2], avg: o.avg})[k];
+    const val = (o, k) => ({t: o.t, price: o.price, chg: o.chg, status: o.status, e1: o.entries?.[0], p1: o.pct?.[0], d1: o.usd?.[0], e2: o.entries?.[1], p2: o.pct?.[1], d2: o.usd?.[1], e3: o.entries?.[2], p3: o.pct?.[2], d3: o.usd?.[2], avg: o.avg, avgs: o.avgSoFar, pnl: o.pnl})[k];
     const s = rs.slice().sort((a, b) => { const x = val(a, tSort.k), y = val(b, tSort.k); if (x == null) return 1; if (y == null) return -1; return (typeof x === "string" ? x.localeCompare(y) : x - y) * tSort.d; });
     $("tbody").replaceChildren(...s.map((o) => {
       const tr = el("tr"); const link = el("a", "", o.t + " ↗"); link.href = LAYOUT + encodeURIComponent(o.tv || ("BINANCE:" + o.t + "USDT")); link.target = "_blank"; link.rel = "noopener";
@@ -460,7 +465,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       const td = (t, c) => el("td", c || "", t); const f = el("td"); f.append(link);
       tr.append(f, td(fp(o.price)), td(fpc(o.chg, true, 2), o.chg > 0 ? "pos" : o.chg < 0 ? "neg" : ""), td(o.status, o.status === "In buy zone" ? "ok" : ""));
       for (let k = 0; k < 3; k++) { const h = o.hits?.[k]; const hot = o.alert && k === o.next; tr.append(td(fp(o.entries?.[k])), td(o.entries ? (h ? "✓ Reached" : drop(o.pct[k])) : "–", h ? "ok" : hot ? "hot" : "acc"), td(o.entries ? (h ? "–" : fd(o.usd[k], o.price)) : "–")); }
-      tr.append(td(fp(o.avg))); return tr;
+      tr.append(td(fp(o.avg)), td(o.avgSoFar ? fp(o.avgSoFar) : "–"), td(o.pnl != null ? fpc(o.pnl) : "–", o.pnl > 0 ? "pos" : o.pnl < 0 ? "neg" : "")); return tr;
     }));
   }
 
