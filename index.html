@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Mal Crypto spot buy zones: live prices, three DCA entries per coin and alerts."><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Mal Crypto spot buy zones: live prices, five DCA entries per coin and alerts."><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
 <title>Mal Crypto Buy Zones</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -213,7 +213,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     <div>
       <p class="eyebrow">Mal Crypto · Spot DCA watchlist</p>
       <h1>Buy zone <span>watchlist</span></h1>
-      <p class="sub" id="takeaway">Live prices against your weekly buy zones. Each zone is split into three entries, and you buy more the deeper price goes.</p>
+      <p class="sub" id="takeaway">Live prices against your weekly buy zones. Each zone is split into five entries from the top of the box to the very bottom, and you buy more the deeper price goes.</p>
     </div>
     <div class="actions">
       <span class="live glass off" id="live" role="status"><span class="dot"></span><span id="liveText">Connecting…</span></span>
@@ -268,7 +268,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       <th data-k="t">Coin</th><th data-k="price">Price</th><th data-k="chg">24h</th><th data-k="status">Status</th>
       <th data-k="hit">Entries hit</th><th data-k="nx">Next entry</th><th data-k="np">Drop needed</th><th data-k="nd">$ away</th>
       <th data-k="e1">Entry 1</th><th data-k="e2">Entry 2</th><th data-k="e3">Entry 3</th><th data-k="e4">Entry 4</th><th data-k="e5">Entry 5</th>
-      <th data-k="avg">Avg if all 3 fill</th><th data-k="avgs">Avg so far</th><th data-k="pnl">P&amp;L now</th>
+      <th data-k="avg">Avg if all 5 fill</th><th data-k="avgs">Avg so far</th><th data-k="pnl">P&amp;L now</th>
     </tr></thead><tbody id="tbody"></tbody></table>
   </section>
   <p class="note" id="foot">Live prices from Crypto.com, updated every 30 seconds. Buy zones drawn by Mal Crypto on the weekly chart. Educational content, not financial advice.</p>
@@ -300,7 +300,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   let soundOn = false, drawn = false, booted = false;
 
   const num = (v) => { if (v == null) return null; if (typeof v === "number") return v; const s = String(v).replace(/[$,\s]/g, ""); if (!s || s === "—") return null; const pct = s.endsWith("%"); const n = parseFloat(pct ? s.slice(0, -1) : s); return isNaN(n) ? null : (pct ? n / 100 : n); };
-  const dp = (p) => p === 0 ? 0 : p >= 100 ? 2 : p >= 10 ? 3 : p >= 1 ? 4 : p >= 0.1 ? 4 : p >= 0.01 ? 5 : 6;
+  const dp = (p) => !p ? 0 : p >= 100 ? 2 : p >= 10 ? 3 : p >= 1 ? 4 : Math.min(12, Math.ceil(-Math.log10(p)) + 4);
   const fp = (p) => p == null ? "–" : "$" + p.toLocaleString("en-US", {minimumFractionDigits: dp(p), maximumFractionDigits: dp(p)});
   const fd = (d, ref) => d == null ? "–" : "$" + Math.abs(d).toLocaleString("en-US", {minimumFractionDigits: dp(ref), maximumFractionDigits: dp(ref)});
   const fpc = (x, signed = true, digits = 1) => x == null ? "–" : (signed ? (x > 0 ? "+" : x < 0 ? "−" : "") : "") + Math.abs(x * 100).toFixed(digits) + "%";
@@ -310,9 +310,9 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     const q = tick.get(c.pair);
     const price = q ? q.last : c.sheetPrice, chg = q ? q.change : c.sheetChg;
     const o = {...c, price, chg};
-    if (c.top == null || c.bot == null || price == null) { o.status = c.top == null ? "Awaiting levels" : "No price"; return o; }
+    if (c.top == null || c.bot == null || price == null) { o.status = c.top == null || c.bot == null ? "Awaiting levels" : "No price"; return o; }
     const top = Math.max(c.top, c.bot), bot = Math.min(c.top, c.bot), step = (top - bot) / 4;
-    o.entries = [0, 1, 2, 3, 4].map((k) => top - k * step); o.bottom = bot;
+    o.entries = [0, 1, 2, 3, 4].map((k) => +(top - k * step).toPrecision(12)); o.bottom = bot;
     o.hits = o.entries.map((L) => L > 0 && price <= L);
     o.reached = o.hits.filter(Boolean).length;
     o.pct = o.entries.map((L) => price <= L ? 0 : L / price - 1);
@@ -342,7 +342,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     if (filter === "alert") r = r.filter((x) => x.alert);
     if (filter === "in") r = r.filter((x) => x.status === "In buy zone");
     if (filter === "above") r = r.filter((x) => x.status === "Above buy zone");
-    const key = {next: (x) => x.nextPct == null ? (x.entries ? 1 : -9) : x.nextPct, entries: (x) => (x.reached ?? -1) * 10 + (x.nextPct ?? 0), chg: (x) => x.chg ?? -9}[sortBy];
+    const key = {next: (x) => x.nextPct == null ? (x.entries ? -8 : -9) : x.nextPct, entries: (x) => (x.reached ?? -1) * 10 + (x.nextPct ?? 0), chg: (x) => x.chg ?? -9}[sortBy];
     r.sort(key ? (a, b) => key(b) - key(a) : (a, b) => a.t.localeCompare(b.t));
     return r;
   }
@@ -355,7 +355,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     $("sNear").textContent = al.length;
     $("sNearList").textContent = al.map((x) => x.t).join(" · ") || "Nothing close yet";
     const p = a.filter((x) => x.nextPct != null).sort((x, y) => y.nextPct - x.nextPct)[0];
-    if (p) { $("sNext").replaceChildren(document.createTextNode(p.t), el("small", "", drop(p.nextPct) + " away")); $("sNextS").textContent = `Entry ${p.next + 1} at ${fp(p.entries[p.next])}`; }
+    if (p) { $("sNext").replaceChildren(document.createTextNode(p.t), el("small", "", drop(p.nextPct) + " away")); $("sNextS").textContent = `Entry ${p.next + 1} at ${fp(p.entries[p.next])}`; } else { $("sNext").textContent = "–"; $("sNextS").textContent = "–"; }
     const ch = a.filter((x) => x.chg != null), avg = ch.reduce((s, x) => s + x.chg, 0) / (ch.length || 1);
     $("sAvg").textContent = ch.length ? fpc(avg, true, 2) : "–"; $("sAvg").style.color = avg < 0 ? "var(--coral)" : "var(--mint)";
     $("sAvgS").textContent = ch.length ? `${ch.filter((x) => x.chg < 0).length} down · ${ch.filter((x) => x.chg > 0).length} up today` : "";
@@ -431,7 +431,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     pr.append(px, el("span", "badge " + bc, o.status)); a.append(pr);
     if (o.entries) {
       if (o.alert) a.append(flag(false, `${drop(o.nextPct)} from Entry ${o.next + 1} (${fd(o.usd[o.next], o.price)} away)`));
-      else if (o.next === -1) a.append(flag(true, "All five entries reached"));
+      else if (o.next === -1) a.append(flag(true, `All ${o.entries.filter((L) => L > 0).length} entries reached`));
       a.append(ladder(o));
       const f = el("div", "foot"); const avgs = el("div", "avgs");
       const a1 = el("span"); a1.append(document.createTextNode("Average if all 5 fill "), el("b", "", fp(o.avg))); avgs.append(a1);
@@ -494,7 +494,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   function parseSheet(values) {
     const vals = values || [];
     const sr = vals.find((r) => r[0] === "DCA split"); let sp = null;
-    if (sr) { const s = [num(sr[2]), num(sr[4]), num(sr[6]), num(sr[8]), num(sr[10])]; if (s.every((x) => x != null)) sp = s; }
+    if (sr) { const s = [num(sr[2]), num(sr[4]), num(sr[6]), num(sr[8]), num(sr[10])]; if (s.every((x) => x != null && x >= 0) && s.some((x) => x > 0)) sp = s; }
     const hi = vals.findIndex((r) => r[0] === "Ticker"); if (hi < 0) return null;
     const H = vals[hi]; const col = (n) => H.findIndex((h) => String(h).trim().toLowerCase() === n.toLowerCase());
     const c = {t: col("Ticker"), n: col("Name"), p: col("Price"), ch: col("24h %"), top: col("Buy zone top"), bot: col("Buy zone bottom"), sl: col("Sell zone low"), sh: col("Sell zone high"), stop: col("Stop"), tv: col("TradingView symbol"), pair: col("Crypto.com pair")};
@@ -506,7 +506,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   function useSnapshot() { split = SNAPSHOT.split.slice(); coins = SNAPSHOT.coins.map(([t, name, top, bot, p, ch, tv]) => ({t, name, top, bot, sl: null, sh: null, stop: null, tv: tv || "", pair: t + "_USD", sheetPrice: p, sheetChg: ch})); }
   function readTickers(payload) {
     const list = payload?.data || payload?.result?.data || (Array.isArray(payload) ? payload : []);
-    const out = {}; list.forEach((d) => { const k = String(d.instrument_name ?? d.i).toUpperCase(); const last = parseFloat(d.last ?? d.a); if (!isNaN(last)) out[k] = {last, change: parseFloat(d.change ?? d.c), high: parseFloat(d.high ?? d.h), low: parseFloat(d.low ?? d.l)}; });
+    const out = {}; list.forEach((d) => { const k = String(d.instrument_name ?? d.i).toUpperCase(); const last = parseFloat(d.last ?? d.a); if (!isNaN(last)) out[k] = {last, change: Number.isFinite(parseFloat(d.change ?? d.c)) ? parseFloat(d.change ?? d.c) : null, high: parseFloat(d.high ?? d.h), low: parseFloat(d.low ?? d.l)}; });
     return out;
   }
   function applyTickers(map, at) { Object.entries(map).forEach(([k, v]) => tick.set(k, v)); lastTickAt = at; }
