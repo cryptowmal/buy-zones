@@ -524,8 +524,30 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       } catch (e) {}
       busy = false;
     };
+    const SHEET = "https://docs.google.com/spreadsheets/d/16ZyC_ub-WWFwk-dv0nY3otlvwnrMf86Xb5Hun_eFRkY/gviz/tq?tqx=out:csv&sheet=Watchlist&range=A3:AF300&headers=0";
+    const csv = (text) => { const rows = []; let row = [], f = "", q = false; for (let i = 0; i < text.length; i++) { const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true; else if (ch === ",") { row.push(f); f = ""; } else if (ch === "\n") { row.push(f); rows.push(row); row = []; f = ""; } else if (ch !== "\r") f += ch; }
+      if (f || row.length) { row.push(f); rows.push(row); } return rows; };
+    const loadSheet = async () => {
+      try {
+        const r = await fetch(SHEET + "&t=" + Date.now(), {cache: "no-store"}); if (!r.ok) return;
+        const rows = csv(await r.text());
+        const sr = rows.find((x) => x[0] === "DCA split");
+        if (sr) { const sp = [num(sr[2]), num(sr[4]), num(sr[6])]; if (sp.every((x) => x != null && x >= 0)) split = sp; }
+        const hi = rows.findIndex((x) => x[0] === "Ticker"); if (hi < 0) return;
+        const list = rows.slice(hi + 1).filter((x) => x[0] && x[0].trim()).map((x) => { const t = x[0].trim().toUpperCase();
+          return {t, name: x[1] || "", top: num(x[7]), bot: num(x[8]), sl: num(x[25]), sh: num(x[26]), stop: num(x[27]), tv: (x[30] || "").trim(), pair: ((x[31] || "").trim() || t + "_USD").toUpperCase(), sheetPrice: num(x[3]), sheetChg: num(x[4])}; });
+        if (!list.length) return;
+        const before = coins.map((c) => c.pair).join();
+        coins = list; draw();
+        if (coins.map((c) => c.pair).join() !== before) load();
+      } catch (e) {}
+    };
+    await loadSheet();
     await load();
     setInterval(() => { if (!document.hidden) load(); }, 30000);
+    setInterval(() => { if (!document.hidden) loadSheet(); }, 60000);
     document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastTickAt > 30000) load(); });
     setTimeout(() => { booted = true; }, 4000);
     $("refresh").addEventListener("click", async () => { $("refresh").disabled = true; await load(); setTimeout(() => { $("refresh").disabled = false; }, 1200); });
