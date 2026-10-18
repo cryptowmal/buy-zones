@@ -223,7 +223,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   </header>
 
   <section class="how glass" aria-label="How the entries work">
-    <span><b>How it works:</b> each buy zone is split into three entries. Entry 1 is the top of the zone, Entry 3 the deepest.</span>
+    <span><b>How it works:</b> each buy zone is split into five entries, from the top of the box down to the very bottom. The deeper the entry, the more of the position it gets.</span>
     <span class="steps" id="howSteps"></span>
   </section>
 
@@ -266,9 +266,8 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   <section class="glass tablewrap" id="tableView" hidden>
     <table><thead><tr>
       <th data-k="t">Coin</th><th data-k="price">Price</th><th data-k="chg">24h</th><th data-k="status">Status</th>
-      <th data-k="e1">Entry 1</th><th data-k="p1">Drop needed</th><th data-k="d1">$ away</th>
-      <th data-k="e2">Entry 2</th><th data-k="p2">Drop needed</th><th data-k="d2">$ away</th>
-      <th data-k="e3">Entry 3</th><th data-k="p3">Drop needed</th><th data-k="d3">$ away</th>
+      <th data-k="hit">Entries hit</th><th data-k="nx">Next entry</th><th data-k="np">Drop needed</th><th data-k="nd">$ away</th>
+      <th data-k="e1">Entry 1</th><th data-k="e2">Entry 2</th><th data-k="e3">Entry 3</th><th data-k="e4">Entry 4</th><th data-k="e5">Entry 5</th>
       <th data-k="avg">Avg if all 3 fill</th><th data-k="avgs">Avg so far</th><th data-k="pnl">P&amp;L now</th>
     </tr></thead><tbody id="tbody"></tbody></table>
   </section>
@@ -280,8 +279,8 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
 (() => {
   const SHEET_ID = "16ZyC_ub-WWFwk-dv0nY3otlvwnrMf86Xb5Hun_eFRkY";
   const LAYOUT = "https://www.tradingview.com/chart/FJ81S1fL/?symbol=";
-  const COLORS = ["var(--sky)", "var(--indigo)", "var(--fuchsia)"];
-  const SNAPSHOT = {split:[0.2,0.3,0.5], coins:[
+  const COLORS = ["#38BDF8", "#5B8CFF", "#7C83FF", "#A66BFF", "#E26BFF"];
+  const SNAPSHOT = {split:[0.10,0.15,0.20,0.25,0.30], coins:[
     ["WLD","Worldcoin",0.4202,0.2834,0.4877,-0.0482],["PENDLE","Pendle",2.055,1.307,2.0496,-0.0189],["ICP","Internet Computer",2.598,2.137,2.9312,-0.0249],
     ["CRV","Curve DAO",0.2747,0.2154,0.3451,-0.012],["CVX","Convex Finance",1.629,0.9527,1.9123,-0.0206],["DOGE","Dogecoin",0.08374,0.07165,0.079059,-0.0222],
     ["SPX","SPX6900",0.3984,0.2738,0.37742,0.0585,"BYBIT:SPXUSDT"],["TIA","Celestia",0.4784,0.3203,0.64512,-0.0269],["TRUMP","Official Trump",2.273,1.676,1.754,-0.0357],
@@ -296,7 +295,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   let coins = [], split = SNAPSHOT.split.slice();
   let tick = new Map(), lastTickAt = 0, priceSource = null, coinsSource = null;
   const prevPx = new Map(), prevAlert = new Map();
-  let filter = "all", sortBy = "next", view = "cards", tSort = {k: "p1", d: -1};
+  let filter = "all", sortBy = "next", view = "cards", tSort = {k: "np", d: -1};
   let thr = parseFloat(store.get("mc_thr", "0.05")) || 0.05; $("thr").value = String(thr === 0.1 ? "0.10" : thr);
   let soundOn = false, drawn = false, booted = false;
 
@@ -312,18 +311,18 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     const price = q ? q.last : c.sheetPrice, chg = q ? q.change : c.sheetChg;
     const o = {...c, price, chg};
     if (c.top == null || c.bot == null || price == null) { o.status = c.top == null ? "Awaiting levels" : "No price"; return o; }
-    const top = Math.max(c.top, c.bot), bot = Math.min(c.top, c.bot), step = (top - bot) / 3;
-    o.entries = [top, top - step, top - 2 * step]; o.bottom = bot;
-    o.hits = o.entries.map((L) => price <= L);
+    const top = Math.max(c.top, c.bot), bot = Math.min(c.top, c.bot), step = (top - bot) / 4;
+    o.entries = [0, 1, 2, 3, 4].map((k) => top - k * step); o.bottom = bot;
+    o.hits = o.entries.map((L) => L > 0 && price <= L);
     o.reached = o.hits.filter(Boolean).length;
     o.pct = o.entries.map((L) => price <= L ? 0 : L / price - 1);
     o.usd = o.entries.map((L) => price <= L ? 0 : price - L);
     // Average entry = money spent / coins bought, when each entry gets its share of the money at that entry's exact price.
     const avgOf = (n) => { let money = 0, got = 0; for (let k = 0; k < n; k++) { if (split[k] > 0 && o.entries[k] > 0) { money += split[k]; got += split[k] / o.entries[k]; } } return got ? money / got : null; };
-    o.avg = avgOf(3);
+    o.avg = avgOf(5);
     o.avgSoFar = o.reached ? avgOf(o.reached) : null;
     o.pnl = o.avgSoFar ? price / o.avgSoFar - 1 : null;
-    o.next = o.hits.indexOf(false);
+    o.next = o.hits.findIndex((h, k) => !h && o.entries[k] > 0);
     o.nextPct = o.next === -1 ? null : o.pct[o.next];
     o.status = c.sl != null && price >= c.sl ? "In sell zone" : price > top ? "Above buy zone" : price >= bot ? "In buy zone" : "Below buy zone";
     o.alert = o.nextPct != null && o.nextPct > -thr;
@@ -409,12 +408,11 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     const lad = el("div", "ladder");
     const items = o.entries.map((L, k) => ({p: L, node: rung(
       "e" + (o.hits[k] ? " reached" : "") + (k === o.next ? " next" + (o.alert ? " hot" : "") : ""), COLORS[k],
-      `Entry ${k + 1}`, `${Math.round(split[k] * 100)}% of position${k === 0 ? " · top of zone" : ""}`,
-      fp(L), o.hits[k] ? "✓ Reached" : `${drop(o.pct[k])} · ${fd(o.usd[k], o.price)} away`)}));
+      `Entry ${k + 1}`, `${Math.round(split[k] * 100)}% of position${k === 0 ? " · top of zone" : k === 4 ? " · bottom of zone" : ""}`,
+      fp(L), L <= 0 ? "Can't fill at $0" : o.hits[k] ? "✓ Reached" : `${drop(o.pct[k])} · ${fd(o.usd[k], o.price)} away`)}));
     const now = {p: o.price, node: rung("now", null, "Now", null, fp(o.price), null), now: true};
     const order = items.slice(); let at = order.findIndex((x) => o.price > x.p); if (at === -1) at = order.length; order.splice(at, 0, now);
     order.forEach((x) => lad.append(x.node));
-    lad.append(rung("bottom", null, "Bottom of zone", null, fp(o.bottom), null));
     return lad;
   }
 
@@ -433,11 +431,11 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
     pr.append(px, el("span", "badge " + bc, o.status)); a.append(pr);
     if (o.entries) {
       if (o.alert) a.append(flag(false, `${drop(o.nextPct)} from Entry ${o.next + 1} (${fd(o.usd[o.next], o.price)} away)`));
-      else if (o.next === -1) a.append(flag(true, "All three entries reached"));
+      else if (o.next === -1) a.append(flag(true, "All five entries reached"));
       a.append(ladder(o));
       const f = el("div", "foot"); const avgs = el("div", "avgs");
-      const a1 = el("span"); a1.append(document.createTextNode("Average if all 3 fill "), el("b", "", fp(o.avg))); avgs.append(a1);
-      if (o.avgSoFar) { const a2 = el("span"); a2.append(document.createTextNode(`Average so far (${o.reached} of 3) `), el("b", "", fp(o.avgSoFar)), el("em", o.pnl >= 0 ? "pos" : "neg", ` ${fpc(o.pnl)} now`)); avgs.append(a2); }
+      const a1 = el("span"); a1.append(document.createTextNode("Average if all 5 fill "), el("b", "", fp(o.avg))); avgs.append(a1);
+      if (o.avgSoFar) { const a2 = el("span"); a2.append(document.createTextNode(`Average so far (${o.reached} of 5) `), el("b", "", fp(o.avgSoFar)), el("em", o.pnl >= 0 ? "pos" : "neg", ` ${fpc(o.pnl)} now`)); avgs.append(a2); }
       f.append(avgs, el("span", "open", "Open chart ↗")); a.append(f);
     } else a.append(el("div", "flag", o.status === "Awaiting levels" ? "Add this coin's buy zone in the sheet" : "Waiting for a price"));
     return a;
@@ -457,14 +455,16 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   }
 
   function drawTable(rs) {
-    const val = (o, k) => ({t: o.t, price: o.price, chg: o.chg, status: o.status, e1: o.entries?.[0], p1: o.pct?.[0], d1: o.usd?.[0], e2: o.entries?.[1], p2: o.pct?.[1], d2: o.usd?.[1], e3: o.entries?.[2], p3: o.pct?.[2], d3: o.usd?.[2], avg: o.avg, avgs: o.avgSoFar, pnl: o.pnl})[k];
+    const val = (o, k) => ({t: o.t, price: o.price, chg: o.chg, status: o.status, hit: o.reached, nx: o.next >= 0 ? o.entries?.[o.next] : null, np: o.nextPct, nd: o.next >= 0 ? o.usd?.[o.next] : null, e1: o.entries?.[0], e2: o.entries?.[1], e3: o.entries?.[2], e4: o.entries?.[3], e5: o.entries?.[4], avg: o.avg, avgs: o.avgSoFar, pnl: o.pnl})[k];
     const s = rs.slice().sort((a, b) => { const x = val(a, tSort.k), y = val(b, tSort.k); if (x == null) return 1; if (y == null) return -1; return (typeof x === "string" ? x.localeCompare(y) : x - y) * tSort.d; });
     $("tbody").replaceChildren(...s.map((o) => {
       const tr = el("tr"); const link = el("a", "", o.t + " ↗"); link.href = LAYOUT + encodeURIComponent(o.tv || ("BINANCE:" + o.t + "USDT")); link.target = "_blank"; link.rel = "noopener";
       tr.addEventListener("click", (e) => { if (!e.target.closest("a")) link.click(); });
       const td = (t, c) => el("td", c || "", t); const f = el("td"); f.append(link);
       tr.append(f, td(fp(o.price)), td(fpc(o.chg, true, 2), o.chg > 0 ? "pos" : o.chg < 0 ? "neg" : ""), td(o.status, o.status === "In buy zone" ? "ok" : ""));
-      for (let k = 0; k < 3; k++) { const h = o.hits?.[k]; const hot = o.alert && k === o.next; tr.append(td(fp(o.entries?.[k])), td(o.entries ? (h ? "✓ Reached" : drop(o.pct[k])) : "–", h ? "ok" : hot ? "hot" : "acc"), td(o.entries ? (h ? "–" : fd(o.usd[k], o.price)) : "–")); }
+      const nx = o.entries && o.next >= 0;
+      tr.append(td(o.entries ? `${o.reached} of 5` : "–", o.reached ? "ok" : ""), td(nx ? `Entry ${o.next + 1} · ${fp(o.entries[o.next])}` : o.entries ? "All hit" : "–"), td(nx ? drop(o.pct[o.next]) : "–", o.alert ? "hot" : "acc"), td(nx ? fd(o.usd[o.next], o.price) : "–"));
+      for (let k = 0; k < 5; k++) { const h = o.hits?.[k]; tr.append(td(o.entries ? (h ? "✓ " : "") + fp(o.entries[k]) : "–", h ? "ok" : "")); }
       tr.append(td(fp(o.avg)), td(o.avgSoFar ? fp(o.avgSoFar) : "–"), td(o.pnl != null ? fpc(o.pnl) : "–", o.pnl > 0 ? "pos" : o.pnl < 0 ? "neg" : "")); return tr;
     }));
   }
@@ -494,7 +494,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   function parseSheet(values) {
     const vals = values || [];
     const sr = vals.find((r) => r[0] === "DCA split"); let sp = null;
-    if (sr) { const s = [num(sr[2]), num(sr[4]), num(sr[6])]; if (s.every((x) => x != null)) sp = s; }
+    if (sr) { const s = [num(sr[2]), num(sr[4]), num(sr[6]), num(sr[8]), num(sr[10])]; if (s.every((x) => x != null)) sp = s; }
     const hi = vals.findIndex((r) => r[0] === "Ticker"); if (hi < 0) return null;
     const H = vals[hi]; const col = (n) => H.findIndex((h) => String(h).trim().toLowerCase() === n.toLowerCase());
     const c = {t: col("Ticker"), n: col("Name"), p: col("Price"), ch: col("24h %"), top: col("Buy zone top"), bot: col("Buy zone bottom"), sl: col("Sell zone low"), sh: col("Sell zone high"), stop: col("Stop"), tv: col("TradingView symbol"), pair: col("Crypto.com pair")};
@@ -512,7 +512,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
   function applyTickers(map, at) { Object.entries(map).forEach(([k, v]) => tick.set(k, v)); lastTickAt = at; }
 
   async function boot() {
-    const CFG = {"at":1792279229494,"split":[0.2,0.3,0.5],"coins":[{"bot":0.2834,"name":"Worldcoin","pair":"WLD_USD","sh":null,"sl":null,"stop":null,"t":"WLD","top":0.4202,"tv":""},{"bot":1.307,"name":"Pendle","pair":"PENDLE_USD","sh":null,"sl":null,"stop":null,"t":"PENDLE","top":2.055,"tv":""},{"bot":2.137,"name":"Internet Computer","pair":"ICP_USD","sh":null,"sl":null,"stop":null,"t":"ICP","top":2.598,"tv":""},{"bot":0.2154,"name":"Curve DAO","pair":"CRV_USD","sh":null,"sl":null,"stop":null,"t":"CRV","top":0.2747,"tv":""},{"bot":0.9527,"name":"Convex Finance","pair":"CVX_USD","sh":null,"sl":null,"stop":null,"t":"CVX","top":1.629,"tv":""},{"bot":0.07165,"name":"Dogecoin","pair":"DOGE_USD","sh":null,"sl":null,"stop":null,"t":"DOGE","top":0.08374,"tv":""},{"bot":0.2738,"name":"SPX6900","pair":"SPX_USD","sh":null,"sl":null,"stop":null,"t":"SPX","top":0.3984,"tv":"BYBIT:SPXUSDT"},{"bot":0.3203,"name":"Celestia","pair":"TIA_USD","sh":null,"sl":null,"stop":null,"t":"TIA","top":0.4784,"tv":""},{"bot":1.676,"name":"Official Trump","pair":"TRUMP_USD","sh":null,"sl":null,"stop":null,"t":"TRUMP","top":2.273,"tv":""},{"bot":197.87,"name":"Bitcoin Cash","pair":"BCH_USD","sh":null,"sl":null,"stop":null,"t":"BCH","top":256,"tv":""},{"bot":0.8452,"name":"Filecoin","pair":"FIL_USD","sh":null,"sl":null,"stop":null,"t":"FIL","top":2.012,"tv":""},{"bot":0.05582,"name":"Plasma","pair":"XPL_USD","sh":null,"sl":null,"stop":null,"t":"XPL","top":0.08787,"tv":""},{"bot":12.119,"name":"Compound","pair":"COMP_USD","sh":null,"sl":null,"stop":null,"t":"COMP","top":17.905,"tv":""},{"bot":3.117,"name":"Injective","pair":"INJ_USD","sh":null,"sl":null,"stop":null,"t":"INJ","top":6.367,"tv":""},{"bot":0,"name":"SushiSwap","pair":"SUSHI_USD","sh":null,"sl":null,"stop":null,"t":"SUSHI","top":0.3314,"tv":""}],"tickers":{"BCH_USD":{"change":-0.0015,"high":284,"last":274.87,"low":270.3},"COMP_USD":{"change":-0.03,"high":22.23,"last":21.43,"low":21.193},"CRV_USD":{"change":-0.0114,"high":0.3525,"last":0.3467,"low":0.3354},"CVX_USD":{"change":-0.0206,"high":1.9529,"last":1.9123,"low":1.9123},"DOGE_USD":{"change":-0.0229,"high":0.08096,"last":0.079107,"low":0.07697},"FIL_USD":{"change":-0.07,"high":1.2213,"last":1.0647,"low":1.0389},"ICP_USD":{"change":-0.0277,"high":3.0544,"last":2.9322,"low":2.8738},"INJ_USD":{"change":-0.0163,"high":8.963,"last":8.576,"low":8.372},"PENDLE_USD":{"change":-0.0147,"high":2.1437,"last":2.0593,"low":2.0052},"SPX_USD":{"change":0.0526,"high":0.37742,"last":0.37532,"low":0.3497},"SUSHI_USD":{"change":-0.0572,"high":0.2271,"last":0.2141,"low":0.2141},"TIA_USD":{"change":-0.0504,"high":0.76817,"last":0.64562,"low":0.63625},"TRUMP_USD":{"change":-0.0341,"high":1.825,"last":1.757,"low":1.72},"WLD_USD":{"change":-0.0438,"high":0.5382,"last":0.4912,"low":0.4758},"XPL_USD":{"change":-0.0524,"high":0.08288,"last":0.07854,"low":0.07687}}};
+    const CFG = {"at":1792279229494,"split":[0.1,0.15,0.2,0.25,0.3],"coins":[{"bot":0.2834,"name":"Worldcoin","pair":"WLD_USD","sh":null,"sl":null,"stop":null,"t":"WLD","top":0.4202,"tv":""},{"bot":1.307,"name":"Pendle","pair":"PENDLE_USD","sh":null,"sl":null,"stop":null,"t":"PENDLE","top":2.055,"tv":""},{"bot":2.137,"name":"Internet Computer","pair":"ICP_USD","sh":null,"sl":null,"stop":null,"t":"ICP","top":2.598,"tv":""},{"bot":0.2154,"name":"Curve DAO","pair":"CRV_USD","sh":null,"sl":null,"stop":null,"t":"CRV","top":0.2747,"tv":""},{"bot":0.9527,"name":"Convex Finance","pair":"CVX_USD","sh":null,"sl":null,"stop":null,"t":"CVX","top":1.629,"tv":""},{"bot":0.07165,"name":"Dogecoin","pair":"DOGE_USD","sh":null,"sl":null,"stop":null,"t":"DOGE","top":0.08374,"tv":""},{"bot":0.2738,"name":"SPX6900","pair":"SPX_USD","sh":null,"sl":null,"stop":null,"t":"SPX","top":0.3984,"tv":"BYBIT:SPXUSDT"},{"bot":0.3203,"name":"Celestia","pair":"TIA_USD","sh":null,"sl":null,"stop":null,"t":"TIA","top":0.4784,"tv":""},{"bot":1.676,"name":"Official Trump","pair":"TRUMP_USD","sh":null,"sl":null,"stop":null,"t":"TRUMP","top":2.273,"tv":""},{"bot":197.87,"name":"Bitcoin Cash","pair":"BCH_USD","sh":null,"sl":null,"stop":null,"t":"BCH","top":256,"tv":""},{"bot":0.8452,"name":"Filecoin","pair":"FIL_USD","sh":null,"sl":null,"stop":null,"t":"FIL","top":2.012,"tv":""},{"bot":0.05582,"name":"Plasma","pair":"XPL_USD","sh":null,"sl":null,"stop":null,"t":"XPL","top":0.08787,"tv":""},{"bot":12.119,"name":"Compound","pair":"COMP_USD","sh":null,"sl":null,"stop":null,"t":"COMP","top":17.905,"tv":""},{"bot":3.117,"name":"Injective","pair":"INJ_USD","sh":null,"sl":null,"stop":null,"t":"INJ","top":6.367,"tv":""},{"bot":0,"name":"SushiSwap","pair":"SUSHI_USD","sh":null,"sl":null,"stop":null,"t":"SUSHI","top":0.3314,"tv":""}],"tickers":{"BCH_USD":{"change":-0.0015,"high":284,"last":274.87,"low":270.3},"COMP_USD":{"change":-0.03,"high":22.23,"last":21.43,"low":21.193},"CRV_USD":{"change":-0.0114,"high":0.3525,"last":0.3467,"low":0.3354},"CVX_USD":{"change":-0.0206,"high":1.9529,"last":1.9123,"low":1.9123},"DOGE_USD":{"change":-0.0229,"high":0.08096,"last":0.079107,"low":0.07697},"FIL_USD":{"change":-0.07,"high":1.2213,"last":1.0647,"low":1.0389},"ICP_USD":{"change":-0.0277,"high":3.0544,"last":2.9322,"low":2.8738},"INJ_USD":{"change":-0.0163,"high":8.963,"last":8.576,"low":8.372},"PENDLE_USD":{"change":-0.0147,"high":2.1437,"last":2.0593,"low":2.0052},"SPX_USD":{"change":0.0526,"high":0.37742,"last":0.37532,"low":0.3497},"SUSHI_USD":{"change":-0.0572,"high":0.2271,"last":0.2141,"low":0.2141},"TIA_USD":{"change":-0.0504,"high":0.76817,"last":0.64562,"low":0.63625},"TRUMP_USD":{"change":-0.0341,"high":1.825,"last":1.757,"low":1.72},"WLD_USD":{"change":-0.0438,"high":0.5382,"last":0.4912,"low":0.4758},"XPL_USD":{"change":-0.0524,"high":0.08288,"last":0.07854,"low":0.07687}}};
     split = CFG.split; coins = CFG.coins.map((c) => ({...c, sheetPrice: null, sheetChg: null}));
     if (CFG.tickers) applyTickers(CFG.tickers, CFG.at);
     draw(); setLive();
@@ -529,7 +529,7 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
       } catch (e) {}
       busy = false;
     };
-    const SHEET = "https://docs.google.com/spreadsheets/d/16ZyC_ub-WWFwk-dv0nY3otlvwnrMf86Xb5Hun_eFRkY/gviz/tq?tqx=out:csv&sheet=Watchlist&range=A3:AF300&headers=0";
+    const SHEET = "https://docs.google.com/spreadsheets/d/16ZyC_ub-WWFwk-dv0nY3otlvwnrMf86Xb5Hun_eFRkY/gviz/tq?tqx=out:csv&sheet=Watchlist&range=A3:AL300&headers=0";
     const csv = (text) => { const rows = []; let row = [], f = "", q = false; for (let i = 0; i < text.length; i++) { const ch = text[i];
       if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
       else if (ch === '"') q = true; else if (ch === ",") { row.push(f); f = ""; } else if (ch === "\n") { row.push(f); rows.push(row); row = []; f = ""; } else if (ch !== "\r") f += ch; }
@@ -539,10 +539,10 @@ td.ok{color:var(--mint);font-weight:700} td.pos{color:var(--mint)} td.neg{color:
         const r = await fetch(SHEET + "&t=" + Date.now(), {cache: "no-store"}); if (!r.ok) return;
         const rows = csv(await r.text());
         const sr = rows.find((x) => x[0] === "DCA split");
-        if (sr) { const sp = [num(sr[2]), num(sr[4]), num(sr[6])]; if (sp.every((x) => x != null && x >= 0)) split = sp; }
+        if (sr) { const sp = [num(sr[2]), num(sr[4]), num(sr[6]), num(sr[8]), num(sr[10])]; if (sp.every((x) => x != null && x >= 0)) split = sp; }
         const hi = rows.findIndex((x) => x[0] === "Ticker"); if (hi < 0) return;
         const list = rows.slice(hi + 1).filter((x) => x[0] && x[0].trim()).map((x) => { const t = x[0].trim().toUpperCase();
-          return {t, name: x[1] || "", top: num(x[7]), bot: num(x[8]), sl: num(x[25]), sh: num(x[26]), stop: num(x[27]), tv: (x[30] || "").trim(), pair: ((x[31] || "").trim() || t + "_USD").toUpperCase(), sheetPrice: num(x[3]), sheetChg: num(x[4])}; });
+          return {t, name: x[1] || "", top: num(x[7]), bot: num(x[8]), sl: num(x[31]), sh: num(x[32]), stop: num(x[33]), tv: (x[36] || "").trim(), pair: ((x[37] || "").trim() || t + "_USD").toUpperCase(), sheetPrice: num(x[3]), sheetChg: num(x[4])}; });
         if (!list.length) return;
         const before = coins.map((c) => c.pair).join();
         coins = list; draw();
